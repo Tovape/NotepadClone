@@ -1,0 +1,1 @@
+g++ main.cpp -o main -l gdi32 -l comdlg32

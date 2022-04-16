@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <tchar.h>
-#include "wtypes.h"
+#include <wtypes.h>
 
-#define FILE_MENU_NEW 3
-#define FILE_MENU_OPEN 4
-#define FILE_MENU_EXIT 5
+#define FILE_MENU_NEW 4
+#define FILE_MENU_OPEN 5
+#define FILE_MENU_EXIT 6
 
 // Including Files
 
@@ -22,29 +22,49 @@ using namespace std;
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 void AddMenus(HWND hWnd);
+void AddControl(HWND hWnd);
 
+HICON hIcon1;
 HMENU hMenu;
 
+// Background Window Colors
+COLORREF color = RGB(0x00, 0x00, 0x00);
+HBRUSH backgroundColor = ::CreateSolidBrush(color);
+
+COLORREF color2 = RGB(0xFF, 0x00, 0x00);
+HBRUSH backgroundColor2 = ::CreateSolidBrush(color2);
+
 int WINAPI WinMain(HINSTANCE box2, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
+  SetConsoleTitleA("Debugger");
+
   WNDCLASSW wc = {0};
-  wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+  wc.hbrBackground = (HBRUSH)backgroundColor;
   wc.hCursor = LoadCursor(NULL, IDC_CROSS);
   wc.hInstance = box2;
   wc.lpszClassName = L"box2";
   wc.lpfnWndProc = WindowProcedure;
-
   if (!RegisterClassW(&wc)) {
+    return 1;
+  }
+
+  WNDCLASSW wcs = {0};
+  wcs.hbrBackground = (HBRUSH)backgroundColor2;
+  wcs.hInstance = box2;
+  wcs.lpszClassName = L"static";
+  wcs.lpfnWndProc = WindowProcedure;
+  if (!RegisterClassW(&wcs)) {
     return 1;
   }
 
   // Getting Screen Resolution to place Screen in the center
 
-  int p[1];
-  int *desktopResolution = GetDesktopResolution(p);
-  cout << "Screen Resolution: " << desktopResolution[0] << "x" << desktopResolution[1] << "\n";
+  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+  cout << "Screen resolution: " << screenWidth << "x" << screenHeight << "\n";
 
   // Window Creation
-  CreateWindowW(L"box2", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE,0,100,desktopResolution[0]/2,desktopResolution[1]/2,NULL,NULL,NULL,NULL);
+  //CreateWindowExW(WS_EX_CLIENTEDGE | WS_HSCROLL | WS_EX_ACCEPTFILES, L"box2", L"badox2", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,500,500,NULL,NULL,NULL,NULL);
+  CreateWindowW(L"box2", L"Null", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,500,500,NULL,NULL,NULL,NULL);
 
   MSG msg = {0};
 
@@ -53,7 +73,6 @@ int WINAPI WinMain(HINSTANCE box2, HINSTANCE hPrevInst, LPSTR args, int ncmdshow
     DispatchMessage(&msg);
   }
 
-  sleep(2);
   return 0;
 }
 
@@ -61,6 +80,9 @@ int WINAPI WinMain(HINSTANCE box2, HINSTANCE hPrevInst, LPSTR args, int ncmdshow
 
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
   switch (msg) {
+    // Default
+    default:
+      return DefWindowProcW(hWnd,msg,wp,lp);
     // Closed
     case WM_DESTROY:
       PostQuitMessage(0);
@@ -74,6 +96,9 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_NCCREATE:
       // We can now create the menus for our program in functions.cpp
       AddMenus(hWnd);
+      AddControl(hWnd);
+      // Set Window Title
+      SetWindowTextW(hWnd, L"My Program");
       cout << "Window Created\n";
       break;
     // Being Sized
@@ -91,7 +116,7 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 
       switch(wp) {
         // Handling Menu Buttons
-        case 1:
+        case 3:
           menuItem1();
           cout << "Menu Item 1 - Active\n";
           break;
@@ -102,16 +127,16 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         // Handling Context Menu
         case FILE_MENU_NEW:
+          cout << "Menu Item 3 (New) - Active\n";
+          break;
         case FILE_MENU_OPEN:
+          cout << "Menu Item 4 (Open) - Active\n";
+          break;
         case FILE_MENU_EXIT:
-          cout << "Menu Item 3 (Exit) - Active\n";
+          cout << "Menu Item 5 (Exit) - Active\n";
           DestroyWindow(hWnd);
           break;
-
       }
-
-    default:
-      return DefWindowProcW(hWnd,msg,wp,lp);
   }
 }
 
@@ -137,4 +162,10 @@ void AddMenus(HWND hWnd) {
   AppendMenu(hMenu, MF_STRING, 3, "Help");
 
   SetMenu(hWnd,hMenu);
+}
+
+// Adding Controls
+
+void AddControl(HWND hWnd) {
+  CreateWindowW(L"static", L"Username:", WS_VISIBLE | WS_CHILD, 250, 250, 250, 100, hWnd, NULL, NULL, NULL);
 }

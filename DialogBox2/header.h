@@ -9,8 +9,8 @@ void menuItem1();
 void menuItem2();
 void menuItem3();
 
-// Get Screen Resolution
+// Get Screen Resolution - Inoperative
 
-int* GetDesktopResolution(int a[]);
+//int* GetDesktopResolution(int a[]);
 
 #endif

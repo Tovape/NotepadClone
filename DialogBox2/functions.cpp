@@ -28,6 +28,9 @@ void menuItem2() {
 
 }
 
+// Getting Desktop Resolution - Inoperative
+
+/*
 int* GetDesktopResolution(int returnValues[]) {
   RECT desktop;
   const HWND hDesktop = GetDesktopWindow();
@@ -40,3 +43,4 @@ int* GetDesktopResolution(int returnValues[]) {
   returnValues[1] = vertical;
   return returnValues;
 }
+*/
