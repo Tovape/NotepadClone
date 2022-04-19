@@ -9,6 +9,10 @@ void menuItem1();
 void menuItem2();
 void menuItem3();
 
+// Login
+
+int GeneralLogin(char a[30], char b[30]);
+
 // Get Screen Resolution - Inoperative
 
 //int* GetDesktopResolution(int a[]);
