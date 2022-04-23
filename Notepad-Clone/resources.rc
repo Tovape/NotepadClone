@@ -1,0 +1,6 @@
+#ifndef _resource_rc
+#define _resource_rc
+
+IDI_ICON1 ICON DISCARDABLE "notepad.ico"
+
+#endif

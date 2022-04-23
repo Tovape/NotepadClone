@@ -1,0 +1,10 @@
+Program
+g++ main.cpp -o main -l gdi32 -l comdlg32
+Program with Icon
+g++ main.cpp resources.res -o main -l gdi32 -l comdlg32
+
+Icon
+Open CMD at
+C:\Windows\System32
+Comand
+windres C:\Users\toniv\Documents\C++\WindowsGUI\Notepad-Clone\resources.rc -O coff C:\Users\toniv\Documents\C++\WindowsGUI\Notepad-Clone\resources.rc

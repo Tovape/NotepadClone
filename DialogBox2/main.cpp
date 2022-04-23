@@ -52,15 +52,13 @@ HBRUSH backgroundColor = ::CreateSolidBrush(color);
 COLORREF color2 = RGB(0xFF, 0x00, 0x00);
 HBRUSH backgroundColor2 = ::CreateSolidBrush(color2);
 
-// Gradient
-
 // Main
 int WINAPI WinMain(HINSTANCE box2, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
   SetConsoleTitleA("Debugger");
 
   WNDCLASSW wc = {0};
   wc.hbrBackground = (HBRUSH)backgroundColor;
-  wc.hCursor = LoadCursor(NULL, IDC_CROSS);
+  wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
   wc.hInstance = box2;
   wc.lpszClassName = L"box2";
   wc.lpfnWndProc = WindowProcedure;
@@ -197,7 +195,7 @@ void AddMenus(HWND hWnd) {
   // File Menu
   HMENU hFileMenu = CreateMenu();
   // Adding Context Menu to the option File
-  AppendMenu(hFileMenu, MF_STRING, FILE_MENU_NEW, "New");
+  AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_NEW, "&Copy\tCtrl+C");
   AppendMenu(hFileMenu, MF_STRING, FILE_MENU_TEST, "Test");
   AppendMenu(hFileMenu, MF_POPUP, (UINT_PTR)hSubmenu, "Open");
   //Adding Separator
