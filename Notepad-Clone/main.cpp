@@ -6,6 +6,7 @@
 #include <tchar.h>
 #include <wtypes.h>
 #include <string.h>
+using namespace std;
 
 // Notepad-Clone by Toni Valverde | tovape.github.io
 
@@ -39,6 +40,7 @@
 // Format
 #define FORMAT_LINESETTING 22
 #define FORMAT_FONT 23
+#define FORMAT_FONT_LIST 31
 
 // View
 #define VIEW_ZOOMIN 24
@@ -53,41 +55,49 @@
 
 // Including Files
 
-#include "header.h"
 #include "functions.cpp"
-using namespace std;
 
 // Prototypes
 LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenu(HWND, HWND);
 void AddContent(HWND, HWND);
+void ClassDialogFont(HINSTANCE);
+void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND);
 
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu;
 HWND hMainwindow,hEditor;
-HFONT hDefaultFont;
+HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
+HFONT hSecundaryFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Segoe UI"));
+HWND hApplyFont;
+HWND hFontList;
 HBITMAP notepadImage, windowsImage;
+int screenWidth = 0;
+int screenHeight = 0;
 
 // Main Windows
 int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
   SetConsoleTitleA("Debugger");
 
-  WNDCLASSW wc = {0};
-  wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
-  wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
-  wc.hInstance = mainWindow;
-  wc.lpszClassName = L"mainWindow";
-  wc.lpfnWndProc = windowProcedure;
-  wc.hIcon = NULL;
-  if (!RegisterClassW(&wc)) {
+  WNDCLASSW windowClass = {0};
+  windowClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+  windowClass.hCursor = LoadCursor(NULL, IDC_IBEAM);
+  windowClass.hInstance = mainWindow;
+  windowClass.lpszClassName = L"mainWindow";
+  windowClass.lpfnWndProc = windowProcedure;
+  windowClass.hIcon = NULL;
+  if (!RegisterClassW(&windowClass)) {
     cout << "Error Registing Class\n";
     return 1;
   }
 
-  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+  // Loading Child Dialogs
+  ClassDialogFont(mainWindow);
+
+  screenWidth = GetSystemMetrics(SM_CXSCREEN);
+  screenHeight = GetSystemMetrics(SM_CYSCREEN);
   cout << "Screen resolution: " << screenWidth << "x" << screenHeight << "\n";
 
   //Create Main Window
@@ -106,6 +116,7 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
 // Main Windows Handling
 
 LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+
   switch (msg) {
     default:
       return DefWindowProcW(hWnd,msg,wp,lp);
@@ -128,7 +139,6 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 
       // Set Editor Default Font
       cout << "Setting Default Font\n";
-      hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
       SendMessage(hEditor, WM_SETFONT, (WPARAM)hDefaultFont, TRUE);
 
       cout << "Window Created\n";
@@ -156,6 +166,37 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           cout << "File Menu Exit\n";
           DestroyWindow(hWnd);
           break;
+        case FORMAT_FONT:
+          cout << "Format Font\n";
+          CreateDialogFont(hWnd, screenWidth, screenHeight, hSecundaryFont, hApplyFont, hFontList);
+          break;
       }
+  }
+}
+
+// Font Windows Handling
+
+LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+  switch(msg) {
+    case WM_COMMAND:
+      switch(wp) {
+        case FORMAT_FONT_LIST:
+          cout << "c";
+          int lbItem = (int)SendMessage(hFontList, LB_GETCURSEL, 0, 0);
+          cout << lbItem;
+          break;
+      }
+      break;
+    case WM_CREATE:
+      cout << "Font Dialog Created\n";
+      // Set Window Title
+      SetWindowTextW(hWnd, L"Font");
+      break;
+    case WM_DESTROY:
+      EnableWindow(hMainwindow, true);
+      DestroyWindow(hWnd);
+      break;
+    default:
+      return DefWindowProcW(hWnd, msg, wp, lp);
   }
 }

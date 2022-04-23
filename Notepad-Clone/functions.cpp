@@ -7,14 +7,15 @@
 #include <wtypes.h>
 #include <string.h>
 
-// Creating Menu Bars
+// Prototypes
+LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 
+// Creating Menu Bars
 void AddMenu(HWND hWnd, HMENU hMenu) {
 
   // Menus
   hMenu = CreateMenu();
   HMENU hFileMenu = CreateMenu();
-
   HMENU hEditionMenu = CreateMenu();
   HMENU hFormatMenu = CreateMenu();
   HMENU hViewMenu = CreateMenu();
@@ -87,3 +88,60 @@ void AddContent(HWND hWnd, HWND hEditor) {
   //hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 683, 440, hWnd, NULL, NULL, NULL);
 }
 */
+
+// Font Dialog Box
+void ClassDialogFont(HINSTANCE mainWindow) {
+
+  WNDCLASSW fontClass = {0};
+  fontClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+  fontClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+  fontClass.hInstance = mainWindow;
+  fontClass.lpszClassName = L"fontDialog";
+  fontClass.lpfnWndProc = DialogFontProcedure;
+
+  RegisterClassW(&fontClass);
+
+}
+
+void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecundaryFont, HWND hApplyFont, HWND hFontList) {
+
+  typedef struct {
+      TCHAR fontName[64];
+      int fontId;
+  } Fonts;
+
+  Fonts fontList[] =
+  {
+      {TEXT("Consolas"), 1 },
+      {TEXT("Courier"), 2 }
+  };
+
+
+  HWND hfontDialog = CreateWindowW(L"fontDialog", L"", WS_VISIBLE | WS_OVERLAPPEDWINDOW, (screenWidth-500)/2, (screenHeight-500)/2, 400, 500, hWnd, NULL, NULL, NULL);
+  SetWindowLong(hfontDialog, GWL_STYLE,GetWindowLong(hfontDialog, GWL_STYLE) & ~WS_MINIMIZEBOX & ~WS_MAXIMIZEBOX);
+
+  // Adding Content
+  hApplyFont = CreateWindowW(L"static", L"Font:", WS_VISIBLE | WS_CHILD, 10, 10, 180, 20, hfontDialog, NULL, NULL, NULL);
+  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 34, 180, 20, hfontDialog, NULL, NULL, NULL);
+  hFontList = CreateWindowW(L"listbox", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_AUTOVSCROLL, 10, 64, 180, 100, hfontDialog, NULL, NULL, NULL);
+
+  CreateWindowW(L"Button", L"Login", WS_VISIBLE | WS_CHILD | WS_BORDER | SS_CENTER, 150, 120, 198, 30, hfontDialog, (HMENU)FORMAT_FONT_LIST, NULL, NULL);
+
+
+  int fontListArray = sizeof(fontList)/sizeof(fontList[0]);
+
+  // Adding Items in the Font List
+  for (int i = 0; i < fontListArray; i++) {
+    int pos = (int)SendMessage(hFontList, LB_ADDSTRING, 0, (LPARAM) fontList[i].fontName);
+    SendMessage(hFontList, LB_SETITEMDATA, pos, (LPARAM) i);
+  }
+
+  SetFocus(hFontList);
+
+  //CreateWindowW(L"combobox", L"Dropdown?", WS_VISIBLE | WS_CHILD, 20, 20, 198, 20, hfontDialog, NULL, NULL, NULL);
+
+  // Setting Font
+  SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
+
+  EnableWindow(hWnd, false);
+}
