@@ -41,6 +41,10 @@ using namespace std;
 #define FORMAT_LINESETTING 22
 #define FORMAT_FONT 23
 #define FORMAT_FONT_LIST 31
+#define FORMAT_FONT_STYLE 32
+#define FORMAT_FONT_SIZE 33
+#define FORMAT_FONT_CANCEL 34
+#define FORMAT_FONT_APPLY 35
 
 // View
 #define VIEW_ZOOMIN 24
@@ -62,7 +66,7 @@ LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenu(HWND, HWND);
 void AddContent(HWND, HWND);
 void ClassDialogFont(HINSTANCE);
-void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND);
+void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND, HWND);
 
 // Global Variables
 HANDLE hLogo;
@@ -72,7 +76,7 @@ HWND hMainwindow,hEditor;
 HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
 HFONT hSecundaryFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Segoe UI"));
 HWND hApplyFont;
-HWND hFontList;
+HWND hFontList, hFontStyle, hFontSize;
 HBITMAP notepadImage, windowsImage;
 int screenWidth = 0;
 int screenHeight = 0;
@@ -124,19 +128,15 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       // Load Menu
       AddMenu(hWnd,hMenu);
       //AddContent(hWnd,hEditor);
-
       // Add Content
       hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
-
       // Set Window Title
       SetWindowTextW(hWnd, L"Notepad");
-
       // Load Icon
       hLogo = LoadImage(0, _T("notepad.ico"), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE);
       if (hLogo) {
         SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM) hLogo);
       }
-
       // Set Editor Default Font
       cout << "Setting Default Font\n";
       SendMessage(hEditor, WM_SETFONT, (WPARAM)hDefaultFont, TRUE);
@@ -168,7 +168,7 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case FORMAT_FONT:
           cout << "Format Font\n";
-          CreateDialogFont(hWnd, screenWidth, screenHeight, hSecundaryFont, hApplyFont, hFontList);
+          CreateDialogFont(hWnd, screenWidth, screenHeight, hSecundaryFont, hFontList, hFontStyle, hFontSize);
           break;
       }
   }
@@ -177,14 +177,43 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 // Font Windows Handling
 
 LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+  int indexFont, indexStyle, indexSize, indexScript;
+  char bufferFontList[64], bufferFontStyle[64], bufferFontSize[64], bufferFontScript[64];
   switch(msg) {
     case WM_COMMAND:
-      switch(wp) {
-        case FORMAT_FONT_LIST:
-          cout << "c";
-          int lbItem = (int)SendMessage(hFontList, LB_GETCURSEL, 0, 0);
-          cout << lbItem;
-          break;
+      switch(LOWORD(wp)) {
+          case FORMAT_FONT_LIST:
+            switch(HIWORD(wp)) {
+              case LBN_SELCHANGE:
+                indexFont = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
+                SendMessage((HWND)lp, LB_GETTEXT, (LPARAM)indexFont, (WPARAM)bufferFontList);
+                cout << bufferFontList << " font selected" << " | Font ID: " << indexFont << "\n";
+                break;
+            }
+            break;
+          case FORMAT_FONT_STYLE:
+            switch(HIWORD(wp)) {
+              case LBN_SELCHANGE:
+                indexStyle = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
+                SendMessage((HWND)lp, LB_GETTEXT, (LPARAM)indexStyle, (WPARAM)bufferFontStyle);
+                cout << bufferFontStyle << " style selected" << " | Style ID: " << indexStyle << "\n";
+                break;
+            }
+            break;
+          case FORMAT_FONT_SIZE:
+            switch(HIWORD(wp)) {
+              indexSize = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
+              SendMessage((HWND)lp, LB_GETITEMDATA, (LPARAM)indexSize, (WPARAM)bufferFontStyle);
+              cout << bufferFontStyle << " size selected" << " | Size ID: " << indexSize << "\n";
+              break;
+            }
+            break;
+          case FORMAT_FONT_CANCEL:
+            EnableWindow(hMainwindow, true);
+            DestroyWindow(hWnd);
+            break;
+          case FORMAT_FONT_APPLY:
+            break;
       }
       break;
     case WM_CREATE:

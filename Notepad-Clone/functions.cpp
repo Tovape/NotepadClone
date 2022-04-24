@@ -103,45 +103,89 @@ void ClassDialogFont(HINSTANCE mainWindow) {
 
 }
 
-void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecundaryFont, HWND hApplyFont, HWND hFontList) {
+typedef struct {
+    TCHAR fontName[64];
+} Fonts;
 
-  typedef struct {
-      TCHAR fontName[64];
-      int fontId;
-  } Fonts;
+Fonts fontList[] =
+{
+    {TEXT("Consolas")},
+    {TEXT("Courier")}
+};
 
-  Fonts fontList[] =
-  {
-      {TEXT("Consolas"), 1 },
-      {TEXT("Courier"), 2 }
-  };
+typedef struct {
+    TCHAR fontStyle[64];
+} Style;
 
+Style styleList[] =
+{
+    {TEXT("Normal")},
+    {TEXT("Cursive")}
+};
 
-  HWND hfontDialog = CreateWindowW(L"fontDialog", L"", WS_VISIBLE | WS_OVERLAPPEDWINDOW, (screenWidth-500)/2, (screenHeight-500)/2, 400, 500, hWnd, NULL, NULL, NULL);
+typedef struct {
+    int fontSize;
+} Sizes;
+
+Sizes sizesList[] =
+{
+    {8},
+    {10}
+};
+
+void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecundaryFont, HWND hFontList, HWND hFontStyle, HWND hFontSize) {
+
+  HWND hfontDialog = CreateWindowW(L"fontDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 400, 500, hWnd, NULL, NULL, NULL);
   SetWindowLong(hfontDialog, GWL_STYLE,GetWindowLong(hfontDialog, GWL_STYLE) & ~WS_MINIMIZEBOX & ~WS_MAXIMIZEBOX);
 
   // Adding Content
-  hApplyFont = CreateWindowW(L"static", L"Font:", WS_VISIBLE | WS_CHILD, 10, 10, 180, 20, hfontDialog, NULL, NULL, NULL);
-  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 34, 180, 20, hfontDialog, NULL, NULL, NULL);
-  hFontList = CreateWindowW(L"listbox", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_AUTOVSCROLL, 10, 64, 180, 100, hfontDialog, NULL, NULL, NULL);
+  CreateWindowW(L"static", L"Font:", WS_VISIBLE | WS_CHILD, 10, 10, 160, 20, hfontDialog, NULL, NULL, NULL);
+  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 34, 160, 20, hfontDialog, NULL, NULL, NULL);
+  hFontList = CreateWindowW(L"listbox", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_AUTOVSCROLL | LBS_STANDARD | LBS_NOTIFY, 10, 64, 160, 100, hfontDialog, (HMENU)FORMAT_FONT_LIST, NULL, NULL);
 
-  CreateWindowW(L"Button", L"Login", WS_VISIBLE | WS_CHILD | WS_BORDER | SS_CENTER, 150, 120, 198, 30, hfontDialog, (HMENU)FORMAT_FONT_LIST, NULL, NULL);
+  CreateWindowW(L"static", L"Style:", WS_VISIBLE | WS_CHILD, 180, 10, 120, 20, hfontDialog, NULL, NULL, NULL);
+  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 180, 34, 120, 20, hfontDialog, NULL, NULL, NULL);
+  hFontStyle = CreateWindowW(L"listbox", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_AUTOVSCROLL | LBS_STANDARD | LBS_NOTIFY, 180, 64, 120, 100, hfontDialog, (HMENU)FORMAT_FONT_STYLE, NULL, NULL);
 
+  CreateWindowW(L"static", L"Size:", WS_VISIBLE | WS_CHILD, 310, 10, 70, 20, hfontDialog, NULL, NULL, NULL);
+  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 310, 34, 70, 20, hfontDialog, NULL, NULL, NULL);
+  hFontSize = CreateWindowW(L"listbox", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_AUTOVSCROLL | LBS_STANDARD | LBS_NOTIFY, 310, 64, 70, 100, hfontDialog, (HMENU)FORMAT_FONT_SIZE, NULL, NULL);
 
-  int fontListArray = sizeof(fontList)/sizeof(fontList[0]);
+  CreateWindowW(L"Button", L"Accept", WS_VISIBLE | WS_CHILD | SS_CENTER | BS_DEFPUSHBUTTON | BS_FLAT, 210, 430, 80, 30, hfontDialog, (HMENU)FORMAT_FONT_APPLY, NULL, NULL);
+  CreateWindowW(L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | SS_CENTER | BS_FLAT, 300, 430, 80, 30, hfontDialog, (HMENU)FORMAT_FONT_CANCEL, NULL, NULL);
 
   // Adding Items in the Font List
+  int fontListArray = sizeof(fontList)/sizeof(fontList[0]);
+  cout << fontListArray << " Fonts Added\n";
   for (int i = 0; i < fontListArray; i++) {
     int pos = (int)SendMessage(hFontList, LB_ADDSTRING, 0, (LPARAM) fontList[i].fontName);
     SendMessage(hFontList, LB_SETITEMDATA, pos, (LPARAM) i);
   }
 
+  // Adding Items in the Style List
+  int fontStyleArray = sizeof(fontList)/sizeof(styleList[0]);
+  cout << fontStyleArray << " Styles Added\n";
+  for (int i = 0; i < fontStyleArray; i++) {
+    int pos = (int)SendMessage(hFontStyle, LB_ADDSTRING, 0, (LPARAM) styleList[i].fontStyle);
+    SendMessage(hFontStyle, LB_SETITEMDATA, pos, (LPARAM) i);
+  }
+
+  // Adding Items in the Size List
+  int fontSizeArray = sizeof(fontList)/sizeof(sizesList[0]);
+  cout << fontSizeArray << " Sizes Added\n";
+  for (int i = 0; i < fontSizeArray; i++) {
+    int pos = (int)SendMessage(hFontSize, LB_SETITEMDATA, 0, (LPARAM) sizesList[i].fontSize);
+    SendMessage(hFontSize, LB_SETITEMDATA, pos, (LPARAM) i);
+  }
+
   SetFocus(hFontList);
+  SetFocus(hFontStyle);
+  SetFocus(hFontSize);
 
   //CreateWindowW(L"combobox", L"Dropdown?", WS_VISIBLE | WS_CHILD, 20, 20, 198, 20, hfontDialog, NULL, NULL, NULL);
 
   // Setting Font
-  SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
+  //SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
 
   EnableWindow(hWnd, false);
 }
