@@ -9,6 +9,13 @@
 
 // Prototypes
 LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
+LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
+
+// Load Images
+void loadImages(HBITMAP bWindows, HBITMAP bNotepad) {
+  bWindows = (HBITMAP)LoadImageW(NULL, L"folderIcon.bmp", IMAGE_BITMAP, 20, 20, LR_LOADFROMFILE);
+  bNotepad = (HBITMAP)LoadImageW(NULL, L"folderIcon.bmp", IMAGE_BITMAP, 20, 20, LR_LOADFROMFILE);
+}
 
 // Creating Menu Bars
 void AddMenu(HWND hWnd, HMENU hMenu) {
@@ -103,35 +110,57 @@ void ClassDialogFont(HINSTANCE mainWindow) {
 
 }
 
-typedef struct {
-    TCHAR fontName[64];
-} Fonts;
+void ClassDialogAbout(HINSTANCE mainWindow) {
 
-Fonts fontList[] =
+  WNDCLASSW aboutClass = {0};
+  aboutClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+  aboutClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+  aboutClass.hInstance = mainWindow;
+  aboutClass.lpszClassName = L"aboutDialog";
+  aboutClass.lpfnWndProc = DialogAboutProcedure;
+
+  RegisterClassW(&aboutClass);
+
+}
+
+struct FontsStruct {
+    TCHAR fontName[64];
+};
+
+FontsStruct fontList[] =
 {
     {TEXT("Consolas")},
-    {TEXT("Courier")}
+    {TEXT("Courier")},
+    {TEXT("Verdana")}
 };
 
-typedef struct {
+struct StyleStruct {
     TCHAR fontStyle[64];
-} Style;
+};
 
-Style styleList[] =
+StyleStruct styleList[] =
 {
     {TEXT("Normal")},
-    {TEXT("Cursive")}
+    {TEXT("Cursive")},
+    {TEXT("Bold")},
+    {TEXT("Italic")}
 };
 
-typedef struct {
-    int fontSize;
-} Sizes;
+struct SizesStruct {
+    TCHAR fontSize[64];
+};
 
-Sizes sizesList[] =
+SizesStruct sizesList[] =
 {
-    {8},
-    {10}
+    {TEXT("8")},
+    {TEXT("10")},
+    {TEXT("12")}
 };
+
+void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindows, HBITMAP bNotepad) {
+  HWND haboutDialog = CreateWindowW(L"aboutDialog", L"", WS_VISIBLE | WS_OVERLAPPEDWINDOW, (screenWidth-500)/2, (screenHeight-500)/2, 500, 300, hWnd, NULL, NULL, NULL);
+  EnableWindow(hWnd, false);
+}
 
 void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecundaryFont, HWND hFontList, HWND hFontStyle, HWND hFontSize) {
 
@@ -174,7 +203,7 @@ void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecun
   int fontSizeArray = sizeof(fontList)/sizeof(sizesList[0]);
   cout << fontSizeArray << " Sizes Added\n";
   for (int i = 0; i < fontSizeArray; i++) {
-    int pos = (int)SendMessage(hFontSize, LB_SETITEMDATA, 0, (LPARAM) sizesList[i].fontSize);
+    int pos = (int)SendMessage(hFontSize, LB_ADDSTRING, 0, (LPARAM) sizesList[i].fontSize);
     SendMessage(hFontSize, LB_SETITEMDATA, pos, (LPARAM) i);
   }
 

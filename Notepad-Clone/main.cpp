@@ -6,6 +6,7 @@
 #include <tchar.h>
 #include <wtypes.h>
 #include <string.h>
+#include <typeinfo>
 using namespace std;
 
 // Notepad-Clone by Toni Valverde | tovape.github.io
@@ -60,24 +61,37 @@ using namespace std;
 // Including Files
 
 #include "functions.cpp"
+#include "fonts.cpp"
 
 // Prototypes
 LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenu(HWND, HWND);
 void AddContent(HWND, HWND);
 void ClassDialogFont(HINSTANCE);
+void ClassDialogAbout(HINSTANCE);
 void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND, HWND);
+void loadImages(HBITMAP, HBITMAP);
 
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu;
 HWND hMainwindow,hEditor;
-HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
-HFONT hSecundaryFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Segoe UI"));
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
+HBITMAP bWindows, bNotepad;
+
+// Fonts
+HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
+HFONT hSecundaryFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Segoe UI"));
+string fontSelected = "Consolas"; // Font Name
+int fontWeight = 0;               // Font Bold
+int fontSize = 0;                 // Font Size
+boolean fontItalic = false;       // Font Italic
+
+// Images
 HBITMAP notepadImage, windowsImage;
+// Screen Size for window creation
 int screenWidth = 0;
 int screenHeight = 0;
 
@@ -99,6 +113,7 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
 
   // Loading Child Dialogs
   ClassDialogFont(mainWindow);
+  ClassDialogAbout(mainWindow);
 
   screenWidth = GetSystemMetrics(SM_CXSCREEN);
   screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -127,7 +142,8 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_NCCREATE:
       // Load Menu
       AddMenu(hWnd,hMenu);
-      //AddContent(hWnd,hEditor);
+      // Load Images
+      loadImages(bWindows, bNotepad);
       // Add Content
       hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
       // Set Window Title
@@ -170,7 +186,20 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           cout << "Format Font\n";
           CreateDialogFont(hWnd, screenWidth, screenHeight, hSecundaryFont, hFontList, hFontStyle, hFontSize);
           break;
+        case HELP_ABOUT:
+          cout << "Help About\n";
+          CreateDialogAbout(hWnd, screenWidth, screenHeight, bWindows, bNotepad);
+          break;
       }
+  }
+}
+
+// About Window Handling
+
+LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+  switch(msg) {
+    default:
+      return DefWindowProcW(hWnd,msg,wp,lp);
   }
 }
 
@@ -188,6 +217,7 @@ LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) 
                 indexFont = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
                 SendMessage((HWND)lp, LB_GETTEXT, (LPARAM)indexFont, (WPARAM)bufferFontList);
                 cout << bufferFontList << " font selected" << " | Font ID: " << indexFont << "\n";
+                fontSelected = fontlistselected(bufferFontList, fontSelected);
                 break;
             }
             break;
@@ -197,14 +227,18 @@ LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) 
                 indexStyle = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
                 SendMessage((HWND)lp, LB_GETTEXT, (LPARAM)indexStyle, (WPARAM)bufferFontStyle);
                 cout << bufferFontStyle << " style selected" << " | Style ID: " << indexStyle << "\n";
+                fontWeight = fontweightselected(bufferFontStyle, fontWeight);
+                fontItalic = fontitalicselected(bufferFontStyle, fontItalic);
                 break;
             }
             break;
           case FORMAT_FONT_SIZE:
             switch(HIWORD(wp)) {
-              indexSize = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
-              SendMessage((HWND)lp, LB_GETITEMDATA, (LPARAM)indexSize, (WPARAM)bufferFontStyle);
-              cout << bufferFontStyle << " size selected" << " | Size ID: " << indexSize << "\n";
+              case LBN_SELCHANGE:
+                indexSize = SendMessage((HWND)lp, LB_GETCARETINDEX, 0, 0);
+                SendMessage((HWND)lp, LB_GETTEXT, (LPARAM)indexSize, (WPARAM)bufferFontSize);
+                cout << bufferFontSize << " size selected" << " | Size ID: " << indexSize << "\n";
+                fontSize = fontsizeselected(bufferFontSize, fontSize);
               break;
             }
             break;
@@ -213,6 +247,18 @@ LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) 
             DestroyWindow(hWnd);
             break;
           case FORMAT_FONT_APPLY:
+            // Set Editor Default Font
+            cout << "Setting Applied Font\n";
+            int fontSelectedlenght = fontSelected.length();
+
+            char char_array[fontSelectedlenght + 1];
+            strcpy(char_array, fontSelected.c_str());
+            cout << fontSize;
+            HFONT hAppliedFont = CreateFont(fontSize,0,0,0,fontWeight,fontItalic,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT(char_array));
+            SendMessage(hEditor, WM_SETFONT, (WPARAM)hAppliedFont, TRUE);
+
+            EnableWindow(hMainwindow, true);
+            DestroyWindow(hWnd);
             break;
       }
       break;
