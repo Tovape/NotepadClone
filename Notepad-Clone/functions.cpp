@@ -11,11 +11,9 @@
 LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 
-// Load Images
-void loadImages(HBITMAP bWindows, HBITMAP bNotepad) {
-  bWindows = (HBITMAP)LoadImageW(NULL, L"folderIcon.bmp", IMAGE_BITMAP, 20, 20, LR_LOADFROMFILE);
-  bNotepad = (HBITMAP)LoadImageW(NULL, L"folderIcon.bmp", IMAGE_BITMAP, 20, 20, LR_LOADFROMFILE);
-}
+// Variables
+string globalPathWindow = "";
+string globalPath = "";
 
 // Creating Menu Bars
 void AddMenu(HWND hWnd, HMENU hMenu) {
@@ -157,8 +155,20 @@ SizesStruct sizesList[] =
     {TEXT("12")}
 };
 
-void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindows, HBITMAP bNotepad) {
-  HWND haboutDialog = CreateWindowW(L"aboutDialog", L"", WS_VISIBLE | WS_OVERLAPPEDWINDOW, (screenWidth-500)/2, (screenHeight-500)/2, 500, 300, hWnd, NULL, NULL, NULL);
+void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindowsImage, HBITMAP bNotepadImage, HWND hWindowsImage, HWND hNotepadImage) {
+  bWindowsImage = (HBITMAP)LoadImageW(NULL, L"windows.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
+  bNotepadImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 40, 40, LR_LOADFROMFILE);
+
+  HWND haboutDialog = CreateWindowW(L"aboutDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 500, 300, hWnd, NULL, NULL, NULL);
+
+  hWindowsImage = CreateWindowW(L"static", NULL, WS_VISIBLE | WS_CHILD | SS_BITMAP, 150, 10, 200, 60, haboutDialog, NULL, NULL, NULL);
+  SendMessageW(hWindowsImage, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) bWindowsImage);
+  hNotepadImage = CreateWindowW(L"static", NULL, WS_VISIBLE | WS_CHILD | SS_BITMAP, 20, 80, 50, 50, haboutDialog, NULL, NULL, NULL);
+  SendMessageW(hNotepadImage, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) bNotepadImage);
+  CreateWindowW(L"static", L"Microsoft Windows 2022 (R)\nNotepad Clone by Toni Valverde\ntovape.github.io", WS_VISIBLE | WS_CHILD, 100, 80, 380, 100, haboutDialog, NULL, NULL, NULL);
+
+  CreateWindowW(L"Button", L"Accept", WS_VISIBLE | WS_CHILD | SS_CENTER | BS_DEFPUSHBUTTON | BS_FLAT, 410, 236, 80, 30, haboutDialog, (HMENU)HELP_ABOUT_ACCEPT, NULL, NULL);
+
   EnableWindow(hWnd, false);
 }
 
@@ -217,4 +227,114 @@ void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecun
   //SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
 
   EnableWindow(hWnd, false);
+}
+
+// Display File
+
+void DisplayFile(char* path, HWND hEditor) {
+  FILE *file;
+  file = fopen(path,"r");
+  fseek(file,0,SEEK_END);
+  int filesize = ftell(file);
+  rewind(file);
+  char *data = new char[filesize+1];
+  fread(data,filesize,1,file);
+  data[filesize] = '\0';
+
+  SetWindowText(hEditor,data);
+
+  fclose(file);
+}
+
+// Open File
+
+void OpenFile(HWND hWnd, HWND hEditor) {
+  cout << "Open File\n";
+
+  char filename[100];
+
+  OPENFILENAME ofn;
+  ZeroMemory(&ofn,sizeof(OPENFILENAME));
+
+  ofn.lStructSize = sizeof(OPENFILENAME);
+  ofn.hwndOwner = hWnd;
+  ofn.lpstrFile = filename;
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = 100;
+  // This will filter the files in the explorer (Open extensions)
+  ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
+  ofn.nFilterIndex = 1;
+
+  GetOpenFileName(&ofn);
+
+  // Path of the file
+  cout << ofn.lpstrFile << "\n";
+  globalPath = ofn.lpstrFile;
+  globalPathWindow = ofn.lpstrFile;
+
+  // Setting New Window Name
+  globalPathWindow = "Notepad - " + globalPathWindow;
+
+  wstring globalPathWide = wstring(globalPathWindow.begin(), globalPathWindow.end());
+  const wchar_t* globalPathTide = globalPathWide.c_str();
+
+  SetWindowTextW(hWnd, TEXT(globalPathTide));
+
+  DisplayFile(ofn.lpstrFile, hEditor);
+}
+
+// Write File
+
+void WriteFile(char* path, HWND hEditor) {
+  FILE *file;
+  file = fopen(path,"w");
+
+  int filesize = GetWindowTextLength(hEditor);
+  char *data = new char[filesize+1];
+  GetWindowText(hEditor,data,filesize+1);
+
+  fwrite(data,filesize+1,1,file);
+  fclose(file);
+}
+
+// Save As File
+
+void SaveAsFile(HWND hWnd, HWND hEditor) {
+  cout << "Saving File\n";
+
+  char filename[100];
+
+  OPENFILENAME ofn;
+  ZeroMemory(&ofn,sizeof(OPENFILENAME));
+
+  ofn.lStructSize = sizeof(OPENFILENAME);
+  ofn.hwndOwner = hWnd;
+  ofn.lpstrFile = filename;
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = 100;
+  // This will filter the files in the explorer (Open extensions)
+  ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
+  ofn.nFilterIndex = 1;
+
+  GetSaveFileName(&ofn);
+
+  // Path of the file
+  cout << ofn.lpstrFile << "\n";
+
+  WriteFile(ofn.lpstrFile, hEditor);
+}
+
+// Save File
+
+void SaveFile(HWND hWnd, HWND hEditor) {
+  OPENFILENAME ofn;
+
+  int globalPathSize = globalPath.length();
+  char filename[globalPathSize + 1];
+  strcpy(filename, globalPath.c_str());
+  ofn.lpstrFile = filename;
+  ofn.hwndOwner = hWnd;
+  cout << ofn.lpstrFile << "\n";
+
+  WriteFile(ofn.lpstrFile, hEditor);
 }

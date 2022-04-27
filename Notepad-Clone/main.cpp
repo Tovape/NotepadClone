@@ -57,6 +57,7 @@ using namespace std;
 #define HELP_VIEW 28
 #define HELP_SUGGESTION 29
 #define HELP_ABOUT 30
+#define HELP_ABOUT_ACCEPT 36
 
 // Including Files
 
@@ -67,10 +68,17 @@ using namespace std;
 LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenu(HWND, HWND);
 void AddContent(HWND, HWND);
+// Class & Creation Prototypes
 void ClassDialogFont(HINSTANCE);
 void ClassDialogAbout(HINSTANCE);
 void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND, HWND);
-void loadImages(HBITMAP, HBITMAP);
+void CreateDialogAbout(HWND, int, int, HBITMAP, HBITMAP, HWND, HWND);
+// FilePrototypes
+void OpenFile(HWND, HWND);
+void DisplayFile(char*, HWND);
+void SaveAsFile(HWND, HWND);
+void SaveFile(HWND, HWND);
+void WriteFile(char*, HWND);
 
 // Global Variables
 HANDLE hLogo;
@@ -79,7 +87,10 @@ HMENU hMenu;
 HWND hMainwindow,hEditor;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
-HBITMAP bWindows, bNotepad;
+
+// Images
+HBITMAP bWindowsImage, bNotepadImage;
+HWND hWindowsImage, hNotepadImage;
 
 // Fonts
 HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
@@ -89,8 +100,6 @@ int fontWeight = 0;               // Font Bold
 int fontSize = 0;                 // Font Size
 boolean fontItalic = false;       // Font Italic
 
-// Images
-HBITMAP notepadImage, windowsImage;
 // Screen Size for window creation
 int screenWidth = 0;
 int screenHeight = 0;
@@ -142,8 +151,6 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_NCCREATE:
       // Load Menu
       AddMenu(hWnd,hMenu);
-      // Load Images
-      loadImages(bWindows, bNotepad);
       // Add Content
       hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
       // Set Window Title
@@ -175,8 +182,17 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
     // Menu Items Behaviour
     case WM_COMMAND:
       switch(wp) {
-        case FILE_MENU_NEW:
-          cout << "File Menu New\n";
+        case FILE_MENU_OPEN:
+          cout << "File Menu Open\n";
+          OpenFile(hWnd, hEditor);
+          break;
+        case FILE_MENU_SAVE:
+          cout << "File Menu Save\n";
+          SaveFile(hWnd, hEditor);
+          break;
+        case FILE_MENU_SAVEAS:
+          cout << "File Menu Save As\n";
+          SaveAsFile(hWnd, hEditor);
           break;
         case FILE_MENU_EXIT:
           cout << "File Menu Exit\n";
@@ -188,7 +204,7 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case HELP_ABOUT:
           cout << "Help About\n";
-          CreateDialogAbout(hWnd, screenWidth, screenHeight, bWindows, bNotepad);
+          CreateDialogAbout(hWnd, screenWidth, screenHeight, bWindowsImage, bNotepadImage, hWindowsImage, hNotepadImage);
           break;
       }
   }
@@ -200,6 +216,25 @@ LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
   switch(msg) {
     default:
       return DefWindowProcW(hWnd,msg,wp,lp);
+    case WM_CREATE:
+      cout << "About Dialog Created\n";
+      // Set Window Title
+      SetWindowTextW(hWnd, L"About");
+      // Set logo
+      SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM) hLogo);
+      break;
+    case WM_DESTROY:
+      EnableWindow(hMainwindow, true);
+      DestroyWindow(hWnd);
+      break;
+    case WM_COMMAND:
+      switch(LOWORD(wp)) {
+        case HELP_ABOUT_ACCEPT:
+        EnableWindow(hMainwindow, true);
+        DestroyWindow(hWnd);
+        break;
+      }
+      break;
   }
 }
 
@@ -266,6 +301,8 @@ LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) 
       cout << "Font Dialog Created\n";
       // Set Window Title
       SetWindowTextW(hWnd, L"Font");
+      // Set logo
+      SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM) hLogo);
       break;
     case WM_DESTROY:
       EnableWindow(hMainwindow, true);
