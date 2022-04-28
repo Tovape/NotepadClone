@@ -31,8 +31,8 @@ void AddMenu(HWND hWnd, HMENU hMenu) {
   // File
   AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hFileMenu, "File");
   AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_NEW, "&New\tCtrl+N");
-  AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_NEWINDOW, "&New Window\tCtrl+S");
-  AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_OPEN, "&Open\tCtrl+May+N");
+  AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_NEWINDOW, "&New Window\tCtrl+May+N");
+  AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_OPEN, "&Open\tCtrl+A");
   AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_SAVE, "&Save\tCtrl+G");
   AppendMenu(hFileMenu, MF_STRING | MF_ENABLED, FILE_MENU_SAVEAS, "&Save As\tCtrl+May+S");
   AppendMenu(hFileMenu, MF_SEPARATOR,NULL,NULL);
@@ -108,6 +108,7 @@ void ClassDialogFont(HINSTANCE mainWindow) {
 
 }
 
+// About Dialog Box
 void ClassDialogAbout(HINSTANCE mainWindow) {
 
   WNDCLASSW aboutClass = {0};
@@ -155,6 +156,7 @@ SizesStruct sizesList[] =
     {TEXT("12")}
 };
 
+// About Dialog
 void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindowsImage, HBITMAP bNotepadImage, HWND hWindowsImage, HWND hNotepadImage) {
   bWindowsImage = (HBITMAP)LoadImageW(NULL, L"windows.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
   bNotepadImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 40, 40, LR_LOADFROMFILE);
@@ -172,6 +174,7 @@ void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWi
   EnableWindow(hWnd, false);
 }
 
+// Font Dialog
 void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecundaryFont, HWND hFontList, HWND hFontStyle, HWND hFontSize) {
 
   HWND hfontDialog = CreateWindowW(L"fontDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 400, 500, hWnd, NULL, NULL, NULL);
@@ -230,7 +233,6 @@ void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecun
 }
 
 // Display File
-
 void DisplayFile(char* path, HWND hEditor) {
   FILE *file;
   file = fopen(path,"r");
@@ -247,7 +249,6 @@ void DisplayFile(char* path, HWND hEditor) {
 }
 
 // Open File
-
 void OpenFile(HWND hWnd, HWND hEditor) {
   cout << "Open File\n";
 
@@ -284,7 +285,6 @@ void OpenFile(HWND hWnd, HWND hEditor) {
 }
 
 // Write File
-
 void WriteFile(char* path, HWND hEditor) {
   FILE *file;
   file = fopen(path,"w");
@@ -298,7 +298,6 @@ void WriteFile(char* path, HWND hEditor) {
 }
 
 // Save As File
-
 void SaveAsFile(HWND hWnd, HWND hEditor) {
   cout << "Saving File\n";
 
@@ -325,7 +324,6 @@ void SaveAsFile(HWND hWnd, HWND hEditor) {
 }
 
 // Save File
-
 void SaveFile(HWND hWnd, HWND hEditor) {
   OPENFILENAME ofn;
 
@@ -336,5 +334,36 @@ void SaveFile(HWND hWnd, HWND hEditor) {
   ofn.hwndOwner = hWnd;
   cout << ofn.lpstrFile << "\n";
 
-  WriteFile(ofn.lpstrFile, hEditor);
+  if (globalPathSize == 0) {
+    SaveAsFile(hWnd, hEditor);
+  } else {
+    WriteFile(ofn.lpstrFile, hEditor);
+  }
+
+}
+
+// New
+void NewFile(HWND hWnd) {
+  globalPathWindow = "";
+  globalPath = "";
+  // Setting New Window Name
+  globalPathWindow = "Notepad";
+  wstring globalPathWide = wstring(globalPathWindow.begin(), globalPathWindow.end());
+  const wchar_t* globalPathTide = globalPathWide.c_str();
+
+  SetWindowTextW(hWnd, TEXT(globalPathTide));
+}
+
+// New Window
+void NewWindow(HWND hWnd, int screenWidth, int screenHeight) {
+  CreateWindowW(L"mainWindow", L"Null", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,700,500,NULL,NULL,NULL,NULL);
+}
+
+// Register Hotkeys - https://docs.microsoft.com/es-es/windows/win32/inputdev/virtual-key-codes
+void RegisterHotkey(HWND hWnd) {
+  RegisterHotKey(hWnd, MACRO_MENU_NEW, MOD_CONTROL, 0x4E);
+  RegisterHotKey(hWnd, MACRO_MENU_NEWINDOW, MOD_CONTROL | MOD_SHIFT, 0x4E);
+  RegisterHotKey(hWnd, MACRO_MENU_OPEN, MOD_CONTROL, 0x41);
+  RegisterHotKey(hWnd, MACRO_MENU_SAVE, MOD_CONTROL, 0x47);
+  RegisterHotKey(hWnd, MACRO_MENU_SAVEAS, MOD_CONTROL | MOD_SHIFT, 0x53);
 }

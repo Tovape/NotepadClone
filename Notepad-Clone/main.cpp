@@ -59,6 +59,13 @@ using namespace std;
 #define HELP_ABOUT 30
 #define HELP_ABOUT_ACCEPT 36
 
+// Macros
+#define MACRO_MENU_NEW 50
+#define MACRO_MENU_NEWINDOW 51
+#define MACRO_MENU_OPEN 52
+#define MACRO_MENU_SAVE 53
+#define MACRO_MENU_SAVEAS 54
+
 // Including Files
 
 #include "functions.cpp"
@@ -79,7 +86,9 @@ void DisplayFile(char*, HWND);
 void SaveAsFile(HWND, HWND);
 void SaveFile(HWND, HWND);
 void WriteFile(char*, HWND);
-
+void NewWindow(HWND);
+void NewFile(HWND);
+void RegisterHotkey(HWND);
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
@@ -106,6 +115,7 @@ int screenHeight = 0;
 
 // Main Windows
 int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
+
   SetConsoleTitleA("Debugger");
 
   WNDCLASSW windowClass = {0};
@@ -138,6 +148,7 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
     DispatchMessage(&msg);
   }
 
+
   return 0;
 }
 
@@ -145,9 +156,37 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
 
 LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 
+  // Register Hotkeys
+  RegisterHotkey(hWnd);
+
   switch (msg) {
     default:
       return DefWindowProcW(hWnd,msg,wp,lp);
+    // Hotkeys Handling
+    case WM_HOTKEY:
+      switch(LOWORD(wp)) {
+        case MACRO_MENU_NEW:
+        cout << "File Menu New\n";
+        NewFile(hWnd);
+        break;
+        case MACRO_MENU_NEWINDOW:
+        cout << "File Menu New Window - Incomplete\n";
+        NewWindow(hWnd, screenWidth, screenHeight);
+        break;
+        case MACRO_MENU_OPEN:
+        cout << "File Menu Open\n";
+        OpenFile(hWnd, hEditor);
+        break;
+        case MACRO_MENU_SAVE:
+        cout << "File Menu Save\n";
+        SaveFile(hWnd, hEditor);
+        break;
+        case MACRO_MENU_SAVEAS:
+        cout << "File Menu Save As\n";
+        SaveAsFile(hWnd, hEditor);
+        break;
+      }
+      break;
     case WM_NCCREATE:
       // Load Menu
       AddMenu(hWnd,hMenu);
@@ -182,6 +221,14 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
     // Menu Items Behaviour
     case WM_COMMAND:
       switch(wp) {
+        case FILE_MENU_NEW:
+          cout << "File Menu New\n";
+          NewFile(hWnd);
+          break;
+        case FILE_MENU_NEWINDOW:
+          cout << "File Menu New Window - Incomplete\n";
+          NewWindow(hWnd, screenWidth, screenHeight);
+          break;
         case FILE_MENU_OPEN:
           cout << "File Menu Open\n";
           OpenFile(hWnd, hEditor);
