@@ -6,6 +6,8 @@
 #include <tchar.h>
 #include <wtypes.h>
 #include <string.h>
+#include <chrono>
+#include <ctime>
 
 // Prototypes
 LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -357,6 +359,22 @@ void NewFile(HWND hWnd) {
 // New Window
 void NewWindow(HWND hWnd, int screenWidth, int screenHeight) {
   CreateWindowW(L"mainWindow", L"Null", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,700,500,NULL,NULL,NULL,NULL);
+}
+
+// Timestamp
+void Timestamp(HWND hWnd, HWND hEditor) {
+
+  // Get Time format HH:MM DD/MM/YYYY
+  time_t t = time(0);
+  tm* now = localtime(&t);
+  string timestamp = to_string(now->tm_hour) + ":" + to_string(now->tm_min) + " " + to_string(now->tm_mday) + "/" + to_string(now->tm_mon + 1) + "/" + to_string(now->tm_year + 1900);
+
+  cout << timestamp << "\n";
+
+  int index = GetWindowTextLength(hEditor);
+  SetFocus(hEditor);
+  SendMessageA(hEditor, EM_SETSEL, (WPARAM)index, (LPARAM)index);
+  SendMessageA(hEditor, EM_REPLACESEL, 0, (LPARAM)timestamp.c_str());
 }
 
 // Register Hotkeys - https://docs.microsoft.com/es-es/windows/win32/inputdev/virtual-key-codes

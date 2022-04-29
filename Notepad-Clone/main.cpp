@@ -7,6 +7,7 @@
 #include <wtypes.h>
 #include <string.h>
 #include <typeinfo>
+
 using namespace std;
 
 // Notepad-Clone by Toni Valverde | tovape.github.io
@@ -202,7 +203,6 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       // Set Editor Default Font
       cout << "Setting Default Font\n";
       SendMessage(hEditor, WM_SETFONT, (WPARAM)hDefaultFont, TRUE);
-
       cout << "Window Created\n";
       break;
     case WM_SIZE:
@@ -244,6 +244,10 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
         case FILE_MENU_EXIT:
           cout << "File Menu Exit\n";
           DestroyWindow(hWnd);
+          break;
+        case EDITION_TIMEDATE:
+          cout << "Edition Menu Timestamp\n";
+          Timestamp(hWnd, hEditor);
           break;
         case FORMAT_FONT:
           cout << "Format Font\n";
