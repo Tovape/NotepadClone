@@ -385,3 +385,22 @@ void RegisterHotkey(HWND hWnd) {
   RegisterHotKey(hWnd, MACRO_MENU_SAVE, MOD_CONTROL, 0x47);
   RegisterHotKey(hWnd, MACRO_MENU_SAVEAS, MOD_CONTROL | MOD_SHIFT, 0x53);
 }
+
+// Search with bing
+void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int selEnd) {
+
+  int selectBuf = selEnd - selStart + 1;
+  int selectSize = GetWindowTextLength(hEditor);
+  char data[selectSize+1];
+  GetWindowTextA(hEditor, data, selectSize+1);
+  string selectText;
+
+  for(int i = selStart; i < selEnd; i++) {
+    selectText.push_back(data[i]);
+  }
+
+  cout << "Selecting Text from " << selStart << " to " << selEnd << "\n";
+  string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
+  system(openWebpage.c_str());
+
+}

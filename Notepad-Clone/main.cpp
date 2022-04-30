@@ -90,6 +90,7 @@ void WriteFile(char*, HWND);
 void NewWindow(HWND);
 void NewFile(HWND);
 void RegisterHotkey(HWND);
+void SearchBing(HWND, HWND, unsigned int, unsigned int);
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
@@ -244,6 +245,19 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
         case FILE_MENU_EXIT:
           cout << "File Menu Exit\n";
           DestroyWindow(hWnd);
+          break;
+        case EDITION_SEARCHBING:
+          cout << "Edition Menu Search With Bing\n";
+
+          unsigned int selStart;
+          unsigned int selEnd;
+          SendMessage(hEditor, EM_GETSEL, (WPARAM) &selStart, (LPARAM) &selEnd);
+          SearchBing(hWnd, hEditor, selStart, selEnd);
+
+          break;
+        case EDITION_SELECTALL:
+          cout << "Edition Menu Select All\n";
+          SendMessage(hEditor, EM_SETSEL, 0, -1);
           break;
         case EDITION_TIMEDATE:
           cout << "Edition Menu Timestamp\n";
