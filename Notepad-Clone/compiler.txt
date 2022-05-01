@@ -1,7 +1,7 @@
 Program
 g++ main.cpp -o main -l gdi32 -l comdlg32
 Program with Icon
-g++ main.cpp resources.res -o notepad -l gdi32 -l comdlg32
+g++ main.cpp resources.res -o notepad -l gdi32 -l comdlg32 -l comctl32
 
 Icon
 Open CMD at

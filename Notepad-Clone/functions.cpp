@@ -16,6 +16,7 @@ LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 // Variables
 string globalPathWindow = "";
 string globalPath = "";
+HWND globalStatus;
 
 // Creating Menu Bars
 void AddMenu(HWND hWnd, HMENU hMenu) {
@@ -70,13 +71,12 @@ void AddMenu(HWND hWnd, HMENU hMenu) {
   // View
 
   AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hViewMenu, "View");
-
   HMENU hViewSubmenu = CreateMenu();
   AppendMenu(hViewSubmenu, MF_STRING | MF_ENABLED, VIEW_ZOOMIN, "&Zoom In\tCtrl++");
   AppendMenu(hViewSubmenu, MF_STRING | MF_ENABLED, VIEW_ZOOMOUT, "&Zoom Out\tCtrl+-");
   AppendMenu(hViewSubmenu, MF_STRING | MF_ENABLED, VIEW_ZOOMDEF, "&Restore Zoom\tCtrl+0");
   AppendMenu(hViewMenu, MF_STRING, (UINT_PTR)hViewSubmenu, "Zoom");
-  AppendMenu(hViewMenu, MF_STRING, VIEW_STATUS, "Status Bar");
+  AppendMenu(hViewMenu, MF_STRING | MF_BYCOMMAND, VIEW_STATUS, "Status Bar");
 
   // Help
   AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, "Help");
@@ -95,6 +95,40 @@ void AddContent(HWND hWnd, HWND hEditor) {
   //hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 683, 440, hWnd, NULL, NULL, NULL);
 }
 */
+
+// Status Bar
+HWND CreateStatusBar(HWND hWnd, int idStatus, HINSTANCE hinst, int cParts, int height) {
+    HWND hStatusBar;
+    RECT rcClient;
+    HLOCAL hloc;
+    PINT paParts;
+    int i, nWidth;
+
+    // Creation
+    hStatusBar = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 17, 17, 0, 0, hWnd, (HMENU) idStatus, hinst, NULL);
+    // Get the coordinates of the parent window's client area.
+    GetClientRect(hWnd, &rcClient);
+    // Allocate an array for holding the right edge coordinates.
+    hloc = LocalAlloc(LHND, sizeof(int) * cParts);
+    paParts = (PINT) LocalLock(hloc);
+    // Calculate the right edge coordinate for each part, and copy the coordinates to the array.
+    nWidth = rcClient.right / cParts;
+    int rightEdge = nWidth;
+    for (i = 0; i < cParts; i++) {
+       paParts[i] = rightEdge;
+       rightEdge += nWidth;
+    }
+    // Tell the status bar to create the window parts.
+    SendMessage(hStatusBar, SB_SETPARTS, (WPARAM) cParts, (LPARAM) paParts);
+    // Set Text
+    SendMessage(hStatusBar, SB_SETTEXT, SBT_NOBORDERS | 2, (LPARAM)"Windows");
+    //SendMessage(hStatusBar, SB_SETBKCOLOR , 0, (LPARAM)RGB(219,227,250)); To set Color
+    globalStatus = hStatusBar;
+    // Free the array, and return.
+    LocalUnlock(hloc);
+    LocalFree(hloc);
+    return hStatusBar;
+}
 
 // Font Dialog Box
 void ClassDialogFont(HINSTANCE mainWindow) {
@@ -275,6 +309,12 @@ void OpenFile(HWND hWnd, HWND hEditor) {
   globalPath = ofn.lpstrFile;
   globalPathWindow = ofn.lpstrFile;
 
+  // Set Status
+  char statusChar[1024];
+  string statusString = globalPathWindow.substr(globalPathWindow.length() - 3);
+  strcpy(statusChar, statusString.c_str());
+  SendMessageW(globalStatus, SB_SETTEXT, SBT_NOBORDERS | 3, (LPARAM) TEXT(statusChar));
+
   // Setting New Window Name
   globalPathWindow = "Notepad - " + globalPathWindow;
 
@@ -403,4 +443,10 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
   string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
   system(openWebpage.c_str());
 
+}
+
+// View Help
+void SearchHelp() {
+  string openWebpage = string("start ").append("https://support.microsoft.com/en-us/windows/help-in-notepad-4d68c388-2ff2-0e7f-b706-35fb2ab88a8c");
+  system(openWebpage.c_str());
 }

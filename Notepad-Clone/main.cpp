@@ -7,6 +7,7 @@
 #include <wtypes.h>
 #include <string.h>
 #include <typeinfo>
+#include <commctrl.h>
 
 using namespace std;
 
@@ -81,6 +82,7 @@ void ClassDialogFont(HINSTANCE);
 void ClassDialogAbout(HINSTANCE);
 void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND, HWND);
 void CreateDialogAbout(HWND, int, int, HBITMAP, HBITMAP, HWND, HWND);
+HWND CreateStatusBar(HWND, int, HINSTANCE, int, int);
 // FilePrototypes
 void OpenFile(HWND, HWND);
 void DisplayFile(char*, HWND);
@@ -95,10 +97,10 @@ void SearchBing(HWND, HWND, unsigned int, unsigned int);
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu;
-HWND hMainwindow,hEditor;
+HWND hMainwindow,hEditor,hStatus,hScrollBar;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
-
+HINSTANCE iMainWindow;
 // Images
 HBITMAP bWindowsImage, bNotepadImage;
 HWND hWindowsImage, hNotepadImage;
@@ -131,7 +133,8 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
     cout << "Error Registing Class\n";
     return 1;
   }
-
+  // Setting for Status Bar
+  iMainWindow = mainWindow;
   // Loading Child Dialogs
   ClassDialogFont(mainWindow);
   ClassDialogAbout(mainWindow);
@@ -201,6 +204,8 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       if (hLogo) {
         SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM) hLogo);
       }
+      // Set Status Bar
+      hStatus = CreateStatusBar(hEditor, 50, iMainWindow, 4, 500);
       // Set Editor Default Font
       cout << "Setting Default Font\n";
       SendMessage(hEditor, WM_SETFONT, (WPARAM)hDefaultFont, TRUE);
@@ -211,9 +216,33 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       if (GetWindowRect(hWnd, &rWindow)) {
         int width = rWindow.right - rWindow.left;
         int height = rWindow.bottom - rWindow.top;
-        cout << "Width: " << width << " | Height: " << height << "\n";
         MoveWindow(hEditor,0,0,width-17,height-60,1);
+        MoveWindow(hStatus,0,0,width-17,height,4);
+
+        int cParts = 4;
+        RECT rcClient;
+        HLOCAL hloc;
+        PINT paParts;
+        int i, nWidth;
+
+        GetClientRect(hWnd, &rcClient);
+
+        // Allocate an array for holding the right edge coordinates.
+        hloc = LocalAlloc(LHND, sizeof(int) * cParts);
+        paParts = (PINT) LocalLock(hloc);
+
+        // Calculate the right edge coordinate for each part, and copy the coordinates to the array.
+        nWidth = rcClient.right / cParts;
+        int rightEdge = nWidth;
+        for (i = 0; i < cParts; i++) {
+           paParts[i] = rightEdge;
+           rightEdge += nWidth;
+        }
+
+        // Tell the status bar to create the window parts.
+        SendMessage(hStatus, SB_SETPARTS, (WPARAM) cParts, (LPARAM) paParts);
       }
+
       break;
     case WM_DESTROY:
       PostQuitMessage(0);
@@ -248,12 +277,10 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case EDITION_SEARCHBING:
           cout << "Edition Menu Search With Bing\n";
-
           unsigned int selStart;
           unsigned int selEnd;
           SendMessage(hEditor, EM_GETSEL, (WPARAM) &selStart, (LPARAM) &selEnd);
           SearchBing(hWnd, hEditor, selStart, selEnd);
-
           break;
         case EDITION_SELECTALL:
           cout << "Edition Menu Select All\n";
@@ -266,6 +293,14 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
         case FORMAT_FONT:
           cout << "Format Font\n";
           CreateDialogFont(hWnd, screenWidth, screenHeight, hSecundaryFont, hFontList, hFontStyle, hFontSize);
+          break;
+        case VIEW_STATUS:
+          cout << "View Status\n";
+          CheckMenuItem(hMenu, VIEW_STATUS, MF_CHECKED );
+          break;
+        case HELP_VIEW:
+          cout << "Help View\n";
+          SearchHelp();
           break;
         case HELP_ABOUT:
           cout << "Help About\n";
