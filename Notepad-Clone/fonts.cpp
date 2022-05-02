@@ -42,13 +42,14 @@ boolean fontitalicselected (char* bufferFontStyle, boolean fontItalic) {
 
 int fontsizeselected (char* bufferFontSize, int fontSize) {
   if (_tcscmp(bufferFontSize, "8") == 0) {
-    fontSize = 8;
+    fontSize = 14;
   } else if (_tcscmp(bufferFontSize, "10") == 0) {
-    fontSize = 10;
+    fontSize = 18;
   } else if (_tcscmp(bufferFontSize, "12") == 0) {
-    fontSize = 12;
+    fontSize = 22;
   } else {
-    fontSize = 0;
+    cout << "Font Size Not Applied\n";
+    fontSize = 18;
   }
   return fontSize;
 }

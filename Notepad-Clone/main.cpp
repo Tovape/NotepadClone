@@ -72,10 +72,10 @@ using namespace std;
 
 #include "functions.cpp"
 #include "fonts.cpp"
-
+void asd();
 // Prototypes
 LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
-void AddMenu(HWND, HWND);
+void AddMenu(HWND, HMENU, HMENU);
 void AddContent(HWND, HWND);
 // Class & Creation Prototypes
 void ClassDialogFont(HINSTANCE);
@@ -96,11 +96,12 @@ void SearchBing(HWND, HWND, unsigned int, unsigned int);
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
-HMENU hMenu;
+HMENU hMenu, hViewMenu;
 HWND hMainwindow,hEditor,hStatus,hScrollBar;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
 HINSTANCE iMainWindow;
+int statusBar = 0;
 // Images
 HBITMAP bWindowsImage, bNotepadImage;
 HWND hWindowsImage, hNotepadImage;
@@ -194,7 +195,7 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       break;
     case WM_NCCREATE:
       // Load Menu
-      AddMenu(hWnd,hMenu);
+      AddMenu(hWnd,hMenu,hViewMenu);
       // Add Content
       hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
       // Set Window Title
@@ -296,7 +297,13 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case VIEW_STATUS:
           cout << "View Status\n";
-          CheckMenuItem(hMenu, VIEW_STATUS, MF_CHECKED );
+          if (statusBar == 0) {
+            DestroyWindow(hStatus);
+            statusBar = 1;
+          } else {
+            hStatus = CreateStatusBar(hEditor, 50, iMainWindow, 4, 500);
+            statusBar = 0;
+          }
           break;
         case HELP_VIEW:
           cout << "Help View\n";

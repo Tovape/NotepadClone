@@ -19,14 +19,14 @@ string globalPath = "";
 HWND globalStatus;
 
 // Creating Menu Bars
-void AddMenu(HWND hWnd, HMENU hMenu) {
+void AddMenu(HWND hWnd, HMENU hMenu, HMENU hViewMenu) {
 
   // Menus
   hMenu = CreateMenu();
   HMENU hFileMenu = CreateMenu();
   HMENU hEditionMenu = CreateMenu();
   HMENU hFormatMenu = CreateMenu();
-  HMENU hViewMenu = CreateMenu();
+  hViewMenu = CreateMenu();
   HMENU hHelpMenu = CreateMenu();
 
   // Appending Menu Content
@@ -76,7 +76,7 @@ void AddMenu(HWND hWnd, HMENU hMenu) {
   AppendMenu(hViewSubmenu, MF_STRING | MF_ENABLED, VIEW_ZOOMOUT, "&Zoom Out\tCtrl+-");
   AppendMenu(hViewSubmenu, MF_STRING | MF_ENABLED, VIEW_ZOOMDEF, "&Restore Zoom\tCtrl+0");
   AppendMenu(hViewMenu, MF_STRING, (UINT_PTR)hViewSubmenu, "Zoom");
-  AppendMenu(hViewMenu, MF_STRING | MF_BYCOMMAND, VIEW_STATUS, "Status Bar");
+  AppendMenu(hViewMenu, MF_STRING | MF_BYCOMMAND | MF_CHECKED, VIEW_STATUS, "Status Bar"); // FIX TODO
 
   // Help
   AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, "Help");
@@ -87,14 +87,6 @@ void AddMenu(HWND hWnd, HMENU hMenu) {
 
   SetMenu(hWnd,hMenu);
 }
-
-// Adding Items - Inoperative
-/*
-void AddContent(HWND hWnd, HWND hEditor) {
-  // Scroll Bar width is 17
-  //hEditor = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0, 0, 683, 440, hWnd, NULL, NULL, NULL);
-}
-*/
 
 // Status Bar
 HWND CreateStatusBar(HWND hWnd, int idStatus, HINSTANCE hinst, int cParts, int height) {
@@ -289,10 +281,10 @@ void OpenFile(HWND hWnd, HWND hEditor) {
   cout << "Open File\n";
 
   char filename[100];
+  filename[0] = 0;
 
   OPENFILENAME ofn;
   ZeroMemory(&ofn,sizeof(OPENFILENAME));
-
   ofn.lStructSize = sizeof(OPENFILENAME);
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = filename;
@@ -304,26 +296,32 @@ void OpenFile(HWND hWnd, HWND hEditor) {
 
   GetOpenFileName(&ofn);
 
-  // Path of the file
-  cout << ofn.lpstrFile << "\n";
-  globalPath = ofn.lpstrFile;
-  globalPathWindow = ofn.lpstrFile;
+  // In case User closes window
+  if (filename[0] != 0) {
+    // Path of the file
+    cout << ofn.lpstrFile << "\n";
+    globalPath = ofn.lpstrFile;
+    globalPathWindow = ofn.lpstrFile;
 
-  // Set Status
-  char statusChar[1024];
-  string statusString = globalPathWindow.substr(globalPathWindow.length() - 3);
-  strcpy(statusChar, statusString.c_str());
-  SendMessageW(globalStatus, SB_SETTEXT, SBT_NOBORDERS | 3, (LPARAM) TEXT(statusChar));
+    // Set Status
+    char statusChar[1024];
+    string statusString = globalPathWindow.substr(globalPathWindow.length() - 3) + " - File";
+    strcpy(statusChar, statusString.c_str());
+    SendMessageW(globalStatus, SB_SETTEXT, SBT_NOBORDERS | 3, (LPARAM) TEXT(statusChar));
 
-  // Setting New Window Name
-  globalPathWindow = "Notepad - " + globalPathWindow;
+    // Setting New Window Name
+    globalPathWindow = "Notepad - " + globalPathWindow;
 
-  wstring globalPathWide = wstring(globalPathWindow.begin(), globalPathWindow.end());
-  const wchar_t* globalPathTide = globalPathWide.c_str();
+    wstring globalPathWide = wstring(globalPathWindow.begin(), globalPathWindow.end());
+    const wchar_t* globalPathTide = globalPathWide.c_str();
 
-  SetWindowTextW(hWnd, TEXT(globalPathTide));
+    SetWindowTextW(hWnd, TEXT(globalPathTide));
 
-  DisplayFile(ofn.lpstrFile, hEditor);
+    DisplayFile(ofn.lpstrFile, hEditor);
+  } else {
+    cout << "Window Closed\n";
+  }
+
 }
 
 // Write File
@@ -440,8 +438,11 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
   }
 
   cout << "Selecting Text from " << selStart << " to " << selEnd << "\n";
-  string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
-  system(openWebpage.c_str());
+
+  if (selStart != 0 && selEnd != 0) {
+    string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
+    system(openWebpage.c_str());
+  }
 
 }
 
