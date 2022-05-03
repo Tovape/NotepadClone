@@ -8,6 +8,9 @@
 #include <string.h>
 #include <typeinfo>
 #include <commctrl.h>
+#include <string>
+#include <regex>
+#include <iterator>
 
 using namespace std;
 
@@ -36,6 +39,8 @@ using namespace std;
 #define EDITION_SEARCHNEXT 16
 #define EDITION_SEARCHPREV 17
 #define EDITION_REPLACE 18
+#define EDITION_REPLACE_ALL 58
+#define EDITION_REPLACE_CANCEL 59
 #define EDITION_GOTO 19
 #define EDITION_SELECTALL 20
 #define EDITION_TIMEDATE 21
@@ -67,12 +72,16 @@ using namespace std;
 #define MACRO_MENU_OPEN 52
 #define MACRO_MENU_SAVE 53
 #define MACRO_MENU_SAVEAS 54
+#define MACRO_EDITION_SEARCHBING 55
+#define MACRO_EDITION_SELECTALL 56
+#define MACRO_EDITION_TIMEDATE 57
 
 // Including Files
 
 #include "functions.cpp"
 #include "fonts.cpp"
-void asd();
+#include "resource.h"
+
 // Prototypes
 LRESULT CALLBACK windowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenu(HWND, HMENU, HMENU);
@@ -80,8 +89,10 @@ void AddContent(HWND, HWND);
 // Class & Creation Prototypes
 void ClassDialogFont(HINSTANCE);
 void ClassDialogAbout(HINSTANCE);
+void ClassDialogReplace(HINSTANCE);
 void CreateDialogFont(HWND, int, int, HFONT, HWND, HWND, HWND);
 void CreateDialogAbout(HWND, int, int, HBITMAP, HBITMAP, HWND, HWND);
+void CreateDialogReplace(HWND, int, int, HWND);
 HWND CreateStatusBar(HWND, int, HINSTANCE, int, int);
 // FilePrototypes
 void OpenFile(HWND, HWND);
@@ -93,15 +104,18 @@ void NewWindow(HWND);
 void NewFile(HWND);
 void RegisterHotkey(HWND);
 void SearchBing(HWND, HWND, unsigned int, unsigned int);
+void ReplaceAll(HWND, HWND, string, HWND);
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu, hViewMenu;
-HWND hMainwindow,hEditor,hStatus,hScrollBar;
+HWND hMainwindow,hEditor,hStatus,hScrollBar,hReplace;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
 HINSTANCE iMainWindow;
 int statusBar = 0;
+unsigned int selStart = 0;
+unsigned int selEnd = 0;
 // Images
 HBITMAP bWindowsImage, bNotepadImage;
 HWND hWindowsImage, hNotepadImage;
@@ -139,6 +153,7 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
   // Loading Child Dialogs
   ClassDialogFont(mainWindow);
   ClassDialogAbout(mainWindow);
+  ClassDialogReplace(mainWindow);
 
   screenWidth = GetSystemMetrics(SM_CXSCREEN);
   screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -168,31 +183,6 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
   switch (msg) {
     default:
       return DefWindowProcW(hWnd,msg,wp,lp);
-    // Hotkeys Handling
-    case WM_HOTKEY:
-      switch(LOWORD(wp)) {
-        case MACRO_MENU_NEW:
-        cout << "File Menu New\n";
-        NewFile(hWnd);
-        break;
-        case MACRO_MENU_NEWINDOW:
-        cout << "File Menu New Window - Incomplete\n";
-        NewWindow(hWnd, screenWidth, screenHeight);
-        break;
-        case MACRO_MENU_OPEN:
-        cout << "File Menu Open\n";
-        OpenFile(hWnd, hEditor);
-        break;
-        case MACRO_MENU_SAVE:
-        cout << "File Menu Save\n";
-        SaveFile(hWnd, hEditor);
-        break;
-        case MACRO_MENU_SAVEAS:
-        cout << "File Menu Save As\n";
-        SaveAsFile(hWnd, hEditor);
-        break;
-      }
-      break;
     case WM_NCCREATE:
       // Load Menu
       AddMenu(hWnd,hMenu,hViewMenu);
@@ -211,6 +201,46 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
       cout << "Setting Default Font\n";
       SendMessage(hEditor, WM_SETFONT, (WPARAM)hDefaultFont, TRUE);
       cout << "Window Created\n";
+      break;
+    // Hotkeys Handling
+    case WM_HOTKEY:
+      switch(LOWORD(wp)) {
+        case MACRO_MENU_NEW:
+          cout << "File Menu New\n";
+          NewFile(hWnd);
+          break;
+        case MACRO_MENU_NEWINDOW:
+          cout << "File Menu New Window - Incomplete\n";
+          NewWindow(hWnd, screenWidth, screenHeight);
+          break;
+        case MACRO_MENU_OPEN:
+          cout << "File Menu Open\n";
+          OpenFile(hWnd, hEditor);
+          break;
+        case MACRO_MENU_SAVE:
+          cout << "File Menu Save\n";
+          SaveFile(hWnd, hEditor);
+          break;
+        case MACRO_MENU_SAVEAS:
+          cout << "File Menu Save As\n";
+          SaveAsFile(hWnd, hEditor);
+          break;
+        case MACRO_EDITION_SEARCHBING:
+          cout << "Edition Menu Search With Bing\n";
+          unsigned int selStart;
+          unsigned int selEnd;
+          SendMessage(hEditor, EM_GETSEL, (WPARAM) &selStart, (LPARAM) &selEnd);
+          SearchBing(hWnd, hEditor, selStart, selEnd);
+          break;
+        case MACRO_EDITION_SELECTALL:
+          cout << "Edition Menu Select All\n";
+          SendMessage(hEditor, EM_SETSEL, 0, -1);
+          break;
+        case MACRO_EDITION_TIMEDATE:
+          cout << "Edition Menu Timestamp\n";
+          Timestamp(hWnd, hEditor);
+          break;
+      }
       break;
     case WM_SIZE:
       // Resize Editor Window
@@ -278,10 +308,14 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case EDITION_SEARCHBING:
           cout << "Edition Menu Search With Bing\n";
-          unsigned int selStart;
-          unsigned int selEnd;
+          selStart = 0;
+          selEnd = 0;
           SendMessage(hEditor, EM_GETSEL, (WPARAM) &selStart, (LPARAM) &selEnd);
           SearchBing(hWnd, hEditor, selStart, selEnd);
+          break;
+        case EDITION_REPLACE:
+          cout << "Edition Menu Replace\n";
+          CreateDialogReplace(hWnd, screenWidth, screenHeight, hReplace);
           break;
         case EDITION_SELECTALL:
           cout << "Edition Menu Select All\n";
@@ -418,4 +452,36 @@ LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) 
     default:
       return DefWindowProcW(hWnd, msg, wp, lp);
   }
+}
+
+
+// Replace Windows Handling
+
+LRESULT CALLBACK DialogReplaceProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+  switch(msg) {
+    case WM_COMMAND:
+      switch(LOWORD(wp)) {
+        case EDITION_REPLACE_CANCEL:
+          EnableWindow(hMainwindow, true);
+          DestroyWindow(hWnd);
+          break;
+        case EDITION_REPLACE_ALL:
+          ReplaceAll(hWnd, hEditor, "guys", hReplace);
+          break;
+      }
+      break;
+    case WM_CREATE:
+      cout << "Replace Dialog Created\n";
+      // Set Window Title
+      SetWindowTextW(hWnd, L"Replace");
+      // Set logo
+      SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM) hLogo);
+      break;
+    case WM_DESTROY:
+      EnableWindow(hMainwindow, true);
+      DestroyWindow(hWnd);
+      break;
+    default:
+      return DefWindowProcW(hWnd, msg, wp, lp);
+    }
 }

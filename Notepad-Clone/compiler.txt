@@ -2,6 +2,8 @@ Program
 g++ main.cpp -o main -l gdi32 -l comdlg32
 Program with Icon
 g++ main.cpp resources.res -o notepad -l gdi32 -l comdlg32 -l comctl32
+Program with Icon and No Warnings
+g++ main.cpp resources.res -o notepad -l gdi32 -l comdlg32 -l comctl32 -w
 
 Icon
 Open CMD at

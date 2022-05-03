@@ -1,6 +1,9 @@
 #ifndef _resource_rc
 #define _resource_rc
+#include "resource.h"
 
 IDI_ICON1 ICON DISCARDABLE "notepad.ico"
+IDI_BITMAP1 BITMAP DISCARDABLE "windows.bmp"
+IDI_BITMAP2 BITMAP DISCARDABLE "notepad.bmp"
 
 #endif

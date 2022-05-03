@@ -12,6 +12,7 @@
 // Prototypes
 LRESULT CALLBACK DialogFontProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 LRESULT CALLBACK DialogAboutProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
+LRESULT CALLBACK DialogReplaceProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 
 // Variables
 string globalPathWindow = "";
@@ -124,30 +125,35 @@ HWND CreateStatusBar(HWND hWnd, int idStatus, HINSTANCE hinst, int cParts, int h
 
 // Font Dialog Box
 void ClassDialogFont(HINSTANCE mainWindow) {
-
   WNDCLASSW fontClass = {0};
   fontClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
   fontClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   fontClass.hInstance = mainWindow;
   fontClass.lpszClassName = L"fontDialog";
   fontClass.lpfnWndProc = DialogFontProcedure;
-
   RegisterClassW(&fontClass);
-
 }
 
 // About Dialog Box
 void ClassDialogAbout(HINSTANCE mainWindow) {
-
   WNDCLASSW aboutClass = {0};
   aboutClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
   aboutClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   aboutClass.hInstance = mainWindow;
   aboutClass.lpszClassName = L"aboutDialog";
   aboutClass.lpfnWndProc = DialogAboutProcedure;
-
   RegisterClassW(&aboutClass);
+}
 
+// Replace Dialog Box
+void ClassDialogReplace(HINSTANCE mainWindow) {
+  WNDCLASSW replaceClass = {0};
+  replaceClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+  replaceClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+  replaceClass.hInstance = mainWindow;
+  replaceClass.lpszClassName = L"replaceDialog";
+  replaceClass.lpfnWndProc = DialogReplaceProcedure;
+  RegisterClassW(&replaceClass);
 }
 
 struct FontsStruct {
@@ -186,7 +192,8 @@ SizesStruct sizesList[] =
 
 // About Dialog
 void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindowsImage, HBITMAP bNotepadImage, HWND hWindowsImage, HWND hNotepadImage) {
-  bWindowsImage = (HBITMAP)LoadImageW(NULL, L"windows.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
+
+  bWindowsImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
   bNotepadImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 40, 40, LR_LOADFROMFILE);
 
   HWND haboutDialog = CreateWindowW(L"aboutDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 500, 300, hWnd, NULL, NULL, NULL);
@@ -252,10 +259,24 @@ void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecun
   SetFocus(hFontStyle);
   SetFocus(hFontSize);
 
-  //CreateWindowW(L"combobox", L"Dropdown?", WS_VISIBLE | WS_CHILD, 20, 20, 198, 20, hfontDialog, NULL, NULL, NULL);
-
   // Setting Font
   //SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
+
+  EnableWindow(hWnd, false);
+}
+
+// Replace Dialog
+void CreateDialogReplace(HWND hWnd, int screenWidth, int screenHeight, HWND hReplace) {
+  HWND hreplaceDialog = CreateWindowW(L"replaceDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 400, 160, hWnd, NULL, NULL, NULL);
+
+  // Adding Content
+  CreateWindowW(L"static", L"Search:", WS_VISIBLE | WS_CHILD, 10, 10, 60, 20, hreplaceDialog, NULL, NULL, NULL);
+  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD, 70, 10, 120, 20, hreplaceDialog, NULL, NULL, NULL);
+  CreateWindowW(L"static", L"Replace:", WS_VISIBLE | WS_CHILD, 10, 40, 120, 20, hreplaceDialog, NULL, NULL, NULL);
+  hReplace = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD, 70, 40, 120, 20, hreplaceDialog, NULL, NULL, NULL);
+
+  CreateWindowW(L"Button", L"Replace All", WS_VISIBLE | WS_CHILD | BS_FLAT, 304, 10, 80, 20, hreplaceDialog, (HMENU)EDITION_REPLACE_ALL, NULL, NULL);
+  CreateWindowW(L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_FLAT, 304, 40, 80, 20, hreplaceDialog, (HMENU)EDITION_REPLACE_CANCEL, NULL, NULL);
 
   EnableWindow(hWnd, false);
 }
@@ -422,12 +443,14 @@ void RegisterHotkey(HWND hWnd) {
   RegisterHotKey(hWnd, MACRO_MENU_OPEN, MOD_CONTROL, 0x41);
   RegisterHotKey(hWnd, MACRO_MENU_SAVE, MOD_CONTROL, 0x47);
   RegisterHotKey(hWnd, MACRO_MENU_SAVEAS, MOD_CONTROL | MOD_SHIFT, 0x53);
+  RegisterHotKey(hWnd, MACRO_EDITION_SEARCHBING, MOD_CONTROL, 0x46);
+  RegisterHotKey(hWnd, MACRO_EDITION_SELECTALL, MOD_CONTROL, 0x45);
+  RegisterHotKey(hWnd, MACRO_EDITION_TIMEDATE, NULL, 0x74);
 }
 
 // Search with bing
 void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int selEnd) {
 
-  int selectBuf = selEnd - selStart + 1;
   int selectSize = GetWindowTextLength(hEditor);
   char data[selectSize+1];
   GetWindowTextA(hEditor, data, selectSize+1);
@@ -439,11 +462,45 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
 
   cout << "Selecting Text from " << selStart << " to " << selEnd << "\n";
 
-  if (selStart != 0 && selEnd != 0) {
+  if ((selStart != 0 && selEnd != 0) || (selEnd != 0)) {
     string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
     system(openWebpage.c_str());
   }
 
+}
+
+// Replace
+void ReplaceAll(HWND hWnd, HWND hEditor, string asd, HWND hReplace) {
+
+  int replaceSize = GetWindowTextLength(hEditor);
+  char data[replaceSize];
+  GetWindowTextA(hEditor, data, replaceSize + 1);
+
+  string replaceText;
+
+  for(int i = 0; i < replaceSize; i++) {
+    replaceText.push_back(data[i]);
+  }
+
+  // Box1
+  WCHAR qwe[24];
+
+  GetWindowTextW(hReplace, qwe, 24);
+
+  cout << "qwe" << TEXT(qwe);
+  cout << "qwe2" << qwe;
+
+  // FIX hReplace
+
+  //
+  replaceText = regex_replace(replaceText, regex("guys"), "qwe");
+
+  // Convert String to Char Array
+  int tempSize = sizeof(replaceText);
+  char convert[tempSize + 1];
+  strcpy(convert, replaceText.c_str());
+
+  SendMessage(hEditor, WM_SETTEXT, FALSE, (LPARAM)&convert);
 }
 
 // View Help

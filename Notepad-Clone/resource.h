@@ -1,0 +1,2 @@
+#define IDI_BITMAP1 101
+#define IDI_BITMAP2 102
