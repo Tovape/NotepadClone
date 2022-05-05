@@ -109,12 +109,12 @@ void ReplaceAll(HWND, HWND, HWND, HWND);
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu, hViewMenu;
-HWND hMainwindow,hEditor,hStatus,hScrollBar,hReplace,hSearch;
+HWND hMainwindow,hEditor,hStatus,hScrollBar,hReplace,hSearch,hreplaceDialog;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
-HWND hreplaceDialog;
 HINSTANCE iMainWindow;
 int statusBar = 0;
+int lineSetting = 0;
 unsigned int selStart = 0;
 unsigned int selEnd = 0;
 // Images
@@ -327,6 +327,16 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
         case EDITION_TIMEDATE:
           cout << "Edition Menu Timestamp\n";
           Timestamp(hWnd, hEditor);
+          break;
+        case FORMAT_LINESETTING:
+          cout << "Format Line Setting\n";
+          if (lineSetting == 0) {
+            lineSetting = 1;
+            SendMessage(hEditor, EM_FMTLINES, TRUE, NULL);
+          } else {
+            lineSetting = 0;
+            SendMessage(hEditor, EM_FMTLINES, FALSE, NULL);
+          }
           break;
         case FORMAT_FONT:
           cout << "Format Font\n";

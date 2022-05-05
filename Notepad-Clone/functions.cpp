@@ -67,7 +67,7 @@ void AddMenu(HWND hWnd, HMENU hMenu, HMENU hViewMenu) {
 
   // Format
   AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hFormatMenu, "Format");
-  AppendMenu(hFormatMenu, MF_STRING, FORMAT_LINESETTING, "Line Settings");
+  AppendMenu(hFormatMenu, MF_STRING | MF_CHECKED, FORMAT_LINESETTING, "Line Settings");
   AppendMenu(hFormatMenu, MF_STRING, FORMAT_FONT, "Font");
 
   // View
@@ -116,7 +116,7 @@ HWND CreateStatusBar(HWND hWnd, int idStatus, HINSTANCE hinst, int cParts, int h
     SendMessage(hStatusBar, SB_SETPARTS, (WPARAM) cParts, (LPARAM) paParts);
     // Set Text
     SendMessage(hStatusBar, SB_SETTEXT, SBT_NOBORDERS | 2, (LPARAM)"Windows");
-    //SendMessage(hStatusBar, SB_SETBKCOLOR , 0, (LPARAM)RGB(219,227,250)); To set Color
+
     globalStatus = hStatusBar;
     // Free the array, and return.
     LocalUnlock(hloc);
@@ -194,7 +194,7 @@ SizesStruct sizesList[] =
 // About Dialog
 void CreateDialogAbout(HWND hWnd, int screenWidth, int screenHeight, HBITMAP bWindowsImage, HBITMAP bNotepadImage, HWND hWindowsImage, HWND hNotepadImage) {
 
-  bWindowsImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
+  bWindowsImage = (HBITMAP)LoadImageW(NULL, L"windows.bmp", IMAGE_BITMAP, 200, 60, LR_LOADFROMFILE);
   bNotepadImage = (HBITMAP)LoadImageW(NULL, L"notepad.bmp", IMAGE_BITMAP, 40, 40, LR_LOADFROMFILE);
 
   HWND haboutDialog = CreateWindowW(L"aboutDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 500, 300, hWnd, NULL, NULL, NULL);
@@ -454,7 +454,8 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
   }
 
   cout << "Selecting Text from " << selStart << " to " << selEnd << "\n";
-
+  selectText = regex_replace(selectText, regex(" "), "%20");
+  cout << selectText;
   if ((selStart != 0 && selEnd != 0) || (selEnd != 0)) {
     string openWebpage = string("start ").append("https://www.google.com/search?q=" + selectText);
     system(openWebpage.c_str());
@@ -463,7 +464,6 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
 }
 
 // Replace
-
 void ReplaceAll(HWND hWnd, HWND hEditor, HWND hReplace, HWND hSearch) {
 
   // Getting hEditor Text
