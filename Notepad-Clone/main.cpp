@@ -104,14 +104,15 @@ void NewWindow(HWND);
 void NewFile(HWND);
 void RegisterHotkey(HWND);
 void SearchBing(HWND, HWND, unsigned int, unsigned int);
-void ReplaceAll(HWND, HWND, string, HWND);
+void ReplaceAll(HWND, HWND, HWND, HWND);
 // Global Variables
 HANDLE hLogo;
 RECT rWindow;
 HMENU hMenu, hViewMenu;
-HWND hMainwindow,hEditor,hStatus,hScrollBar,hReplace;
+HWND hMainwindow,hEditor,hStatus,hScrollBar,hReplace,hSearch;
 HWND hApplyFont;
 HWND hFontList, hFontStyle, hFontSize;
+HWND hreplaceDialog;
 HINSTANCE iMainWindow;
 int statusBar = 0;
 unsigned int selStart = 0;
@@ -119,7 +120,6 @@ unsigned int selEnd = 0;
 // Images
 HBITMAP bWindowsImage, bNotepadImage;
 HWND hWindowsImage, hNotepadImage;
-
 // Fonts
 HFONT hDefaultFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Consolas"));
 HFONT hSecundaryFont = CreateFont(0,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,FALSE,CLEARTYPE_QUALITY,FALSE,TEXT("Segoe UI"));
@@ -315,7 +315,10 @@ LRESULT CALLBACK windowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
           break;
         case EDITION_REPLACE:
           cout << "Edition Menu Replace\n";
-          CreateDialogReplace(hWnd, screenWidth, screenHeight, hReplace);
+          hreplaceDialog = CreateWindowW(L"replaceDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 400, 160, hWnd, NULL, NULL, NULL);
+          hSearch = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD, 70, 10, 120, 20, hreplaceDialog, NULL, NULL, NULL);
+          hReplace = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD, 70, 40, 120, 20, hreplaceDialog, NULL, NULL, NULL);
+          CreateDialogReplace(hWnd, screenWidth, screenHeight, hreplaceDialog);
           break;
         case EDITION_SELECTALL:
           cout << "Edition Menu Select All\n";
@@ -466,7 +469,7 @@ LRESULT CALLBACK DialogReplaceProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
           DestroyWindow(hWnd);
           break;
         case EDITION_REPLACE_ALL:
-          ReplaceAll(hWnd, hEditor, "guys", hReplace);
+          ReplaceAll(hWnd, hEditor, hReplace, hSearch);
           break;
       }
       break;

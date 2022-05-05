@@ -18,6 +18,7 @@ LRESULT CALLBACK DialogReplaceProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 string globalPathWindow = "";
 string globalPath = "";
 HWND globalStatus;
+string globalReplace = "";
 
 // Creating Menu Bars
 void AddMenu(HWND hWnd, HMENU hMenu, HMENU hViewMenu) {
@@ -255,25 +256,17 @@ void CreateDialogFont(HWND hWnd, int screenWidth, int screenHeight, HFONT hSecun
     SendMessage(hFontSize, LB_SETITEMDATA, pos, (LPARAM) i);
   }
 
-  SetFocus(hFontList);
-  SetFocus(hFontStyle);
-  SetFocus(hFontSize);
-
-  // Setting Font
+  //Setting Font
   //SendMessage(hApplyFont, WM_SETFONT, (WPARAM)hSecundaryFont, TRUE);
 
   EnableWindow(hWnd, false);
 }
 
 // Replace Dialog
-void CreateDialogReplace(HWND hWnd, int screenWidth, int screenHeight, HWND hReplace) {
-  HWND hreplaceDialog = CreateWindowW(L"replaceDialog", L"", WS_VISIBLE | WS_OVERLAPPED | WS_SYSMENU, (screenWidth-500)/2, (screenHeight-500)/2, 400, 160, hWnd, NULL, NULL, NULL);
-
+void CreateDialogReplace(HWND hWnd, int screenWidth, int screenHeight, HWND hreplaceDialog) {
   // Adding Content
   CreateWindowW(L"static", L"Search:", WS_VISIBLE | WS_CHILD, 10, 10, 60, 20, hreplaceDialog, NULL, NULL, NULL);
-  CreateWindowW(L"edit", L"", WS_VISIBLE | WS_CHILD, 70, 10, 120, 20, hreplaceDialog, NULL, NULL, NULL);
   CreateWindowW(L"static", L"Replace:", WS_VISIBLE | WS_CHILD, 10, 40, 120, 20, hreplaceDialog, NULL, NULL, NULL);
-  hReplace = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD, 70, 40, 120, 20, hreplaceDialog, NULL, NULL, NULL);
 
   CreateWindowW(L"Button", L"Replace All", WS_VISIBLE | WS_CHILD | BS_FLAT, 304, 10, 80, 20, hreplaceDialog, (HMENU)EDITION_REPLACE_ALL, NULL, NULL);
   CreateWindowW(L"Button", L"Cancel", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_FLAT, 304, 40, 80, 20, hreplaceDialog, (HMENU)EDITION_REPLACE_CANCEL, NULL, NULL);
@@ -470,7 +463,10 @@ void SearchBing(HWND hWnd, HWND hEditor, unsigned int selStart, unsigned int sel
 }
 
 // Replace
-void ReplaceAll(HWND hWnd, HWND hEditor, string asd, HWND hReplace) {
+
+void ReplaceAll(HWND hWnd, HWND hEditor, HWND hReplace, HWND hSearch) {
+
+  // Getting hEditor Text
 
   int replaceSize = GetWindowTextLength(hEditor);
   char data[replaceSize];
@@ -482,18 +478,34 @@ void ReplaceAll(HWND hWnd, HWND hEditor, string asd, HWND hReplace) {
     replaceText.push_back(data[i]);
   }
 
-  // Box1
-  WCHAR qwe[24];
+  // Getting hSearch Text
 
-  GetWindowTextW(hReplace, qwe, 24);
+  int searchSize = GetWindowTextLength(hSearch);
+  char data3[searchSize];
+  GetWindowTextA(hSearch, data3, searchSize + 1);
 
-  cout << "qwe" << TEXT(qwe);
-  cout << "qwe2" << qwe;
+  string searchText;
 
-  // FIX hReplace
+  for(int i = 0; i < searchSize; i++) {
+    searchText.push_back(data3[i]);
+  }
 
-  //
-  replaceText = regex_replace(replaceText, regex("guys"), "qwe");
+  // Getting hReplace Text
+
+  int contextSize = GetWindowTextLength(hReplace);
+  char data2[contextSize];
+  GetWindowTextA(hReplace, data2, contextSize + 1);
+
+  string contextText;
+
+  for(int i = 0; i < contextSize; i++) {
+    contextText.push_back(data2[i]);
+  }
+
+  cout << "Replacing " << contextText << " for " << searchText << "\n";
+
+  // Regex Replace
+  replaceText = regex_replace(replaceText, regex(searchText), contextText);
 
   // Convert String to Char Array
   int tempSize = sizeof(replaceText);
