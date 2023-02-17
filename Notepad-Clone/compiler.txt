@@ -1,5 +1,5 @@
 Program
-g++ main.cpp -o main -l gdi32 -l comdlg32
+g++ main.cpp -o main -l gdi32 -l comdlg32 -w
 Program with Icon
 g++ main.cpp resources.res -o notepad -l gdi32 -l comdlg32 -l comctl32
 Program with Icon and No Warnings

@@ -520,3 +520,16 @@ void SearchHelp() {
   string openWebpage = string("start ").append("https://support.microsoft.com/en-us/windows/help-in-notepad-4d68c388-2ff2-0e7f-b706-35fb2ab88a8c");
   system(openWebpage.c_str());
 }
+
+// Hide Console
+void HideConsole(){
+    ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+}
+
+void ShowConsole(){
+    ::ShowWindow(::GetConsoleWindow(), SW_SHOW);
+}
+
+bool IsConsoleVisible(){
+    return ::IsWindowVisible(::GetConsoleWindow()) != FALSE;
+}

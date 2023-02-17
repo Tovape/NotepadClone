@@ -136,7 +136,8 @@ int screenHeight = 0;
 int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
 
   SetConsoleTitleA("Debugger");
-
+  HideConsole();
+  
   WNDCLASSW windowClass = {0};
   windowClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
   windowClass.hCursor = LoadCursor(NULL, IDC_IBEAM);
@@ -160,7 +161,7 @@ int WINAPI WinMain(HINSTANCE mainWindow, HINSTANCE hPrevInst, LPSTR args, int nc
   cout << "Screen resolution: " << screenWidth << "x" << screenHeight << "\n";
 
   //Create Main Window
-  hMainwindow = CreateWindowW(L"mainWindow", L"Null", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,700,500,NULL,NULL,NULL,NULL);
+  hMainwindow = CreateWindowW(L"mainWindow", L"Null", WS_OVERLAPPEDWINDOW | WS_VISIBLE,(screenWidth-500)/2,(screenHeight-500)/2,700,300,NULL,NULL,NULL,NULL);
 
   MSG msg = {0};
 
